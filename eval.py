@@ -27,21 +27,20 @@ def evaluate(args):
 
 
   #  model = gnnModel(9746, 16)
-  model = gnn.GNNRecommender(x_train.size(1), 16)
+  model = gnn.GNNRecommender(x_train.size(1), args.hidden_channels)
   model.to(device)
   criterion = torch.nn.MSELoss()
   optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
   ratings_train_tensor = torch.tensor(ratings_train['rating'].values, dtype=torch.float)
 
-
+ 
 
   for epoch in range(args.epochs):
-      print('reached here. closing for test')
-      assert False
-      model.train()
+
+      model.train()  
       optimizer.zero_grad()
-      out = model(x_train, edge_index_train)
-      loss = criterion(out, ratings_train_tensor)
+      out = model(x_train.to(device), edge_index_train.to(device))
+      loss = criterion(out.to(device), ratings_train_tensor.to(device))
       loss.backward()
       optimizer.step()
       print(f'Epoch {epoch+1}, Loss: {loss.item()}')
@@ -49,7 +48,7 @@ def evaluate(args):
   model.eval() 
   with torch.no_grad(): 
     test_out = model(x_test.to(device), edge_index_test.to(device)) 
-    test_loss = criterion(test_out, ratings_test_tensor) 
+    test_loss = criterion(test_out.to(device), ratings_test_tensor.to(device)) 
     print(f'Epoch {epoch+1}, Test Loss: {test_loss.item()}')
     # Calculate accuracy 
     # Example threshold, adjust as necessary 
@@ -58,40 +57,6 @@ def evaluate(args):
     test_actuals = ratings_test_tensor.cpu().numpy() 
     accuracy = (test_predictions == test_actuals).mean() 
     print(f'Epoch {epoch+1}, Test Accuracy: {accuracy * 100:.2f}%')
-
-  # def predict(user_id, item_id):
-  #     user_idx = users.index[users['user_id'] == user_id].tolist()[0]
-  #     item_idx = num_users + movies.index[movies['item_id'] == item_id].tolist()[0]
-  #     with torch.no_grad():
-  #         pred = model(x, edge_index)
-  #         return pred[user_idx, item_idx].item()
-
-  # def recommend(user_id, top_k=5):
-  #     user_idx = users.index[users['user_id'] == user_id].tolist()[0]
-  #     item_indices = [num_users + i for i in range(num_items)]
-  #     predictions = []
-  #     with torch.no_grad():
-  #         pred = model(x, edge_index)
-  #         for item_idx in item_indices:
-  #             predictions.append((item_idx - num_users, pred[user_idx, item_idx].item()))
-  #     predictions.sort(key=lambda x: x[1], reverse=True)
-  #     recommended_items = [item[0] for item in predictions[:top_k]]
-  #     return recommended_items
-
-  # '''
-  # Example: Predict rating for a specific user-item pair
-  # user_id = 1  # Replace with the user_id you want to predict for
-  # item_id = 10  # Replace with the item_id you want to predict for
-  # predicted_rating = predict(user_id, item_id)
-  # print(f'Predicted rating for user {user_id} and item {item_id}: {predicted_rating}')
-
-  # # Example: Get top 5 recommendations for a user
-  # user_id = 1  # Replace with the user_id you want recommendations for
-  # recommended_items = recommend(user_id, top_k=5)
-  # print(f'Top 5 recommendations for user {user_id}: {recommended_items}')
-
-  # '''
-
 
 
 
